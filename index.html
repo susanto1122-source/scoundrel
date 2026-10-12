@@ -81,7 +81,17 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-2">
+    <div class="flex items-center flex-wrap gap-2">
+      <!-- Selector Tingkat Kesulitan -->
+      <div class="flex items-center bg-white/90 border border-amber-300 rounded-xl px-2 py-1 shadow-sm gap-1.5">
+        <span class="text-[11px] font-bold text-amber-900 cinzel hidden sm:inline"><i class="fa-solid fa-gauge-high mr-1"></i>Tingkat:</span>
+        <select id="difficultySelect" class="bg-transparent text-xs font-semibold text-amber-950 focus:outline-none cursor-pointer">
+          <option value="easy">Mudah (25 HP)</option>
+          <option value="normal" selected>Normal (20 HP)</option>
+          <option value="hard">Sulit (20 HP & Wajik 2-10)</option>
+        </select>
+      </div>
+
       <button id="rulesBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/90 hover:bg-amber-50 text-amber-900 border border-amber-300 shadow-sm transition flex items-center gap-1.5">
         <i class="fa-solid fa-scroll text-amber-700"></i> Aturan Main
       </button>
@@ -278,7 +288,16 @@
       <div class="overflow-y-auto space-y-3.5 text-xs text-slate-600 pr-1 leading-relaxed">
         <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200">
           <span class="font-bold text-amber-950 block mb-1">🎯 Tujuan Permainan:</span>
-          Habiskan seluruh dek kartu dungeon (44 kartu tanpa kartu wajah Hati) dengan tetap menjaga HP kamu di atas 0. Mulai dengan 20 HP.
+          Habiskan seluruh dek kartu dungeon dengan tetap menjaga HP kamu di atas 0.
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+          <span class="font-bold text-slate-900 block mb-1">⚡ Tingkat Kesulitan:</span>
+          <ul class="list-disc pl-4 space-y-1">
+            <li><strong class="text-emerald-700">Mudah:</strong> Memulai dengan 25 HP (Maksimal 25 HP). Senjata wajik lengkap 2 s/d As (44 kartu).</li>
+            <li><strong class="text-amber-800">Normal:</strong> Memulai dengan 20 HP (Maksimal 20 HP). Senjata wajik lengkap 2 s/d As (44 kartu).</li>
+            <li><strong class="text-rose-700">Sulit:</strong> Memulai dengan 20 HP. Kartu wajik tanpa Jack, Queen, King, dan As (hanya 2-10, dek menjadi 40 kartu). Senjata berat tidak tersedia!</li>
+          </ul>
         </div>
 
         <div>
@@ -426,6 +445,7 @@
     ];
 
     let gameState = {
+      difficulty: 'normal', // 'easy', 'normal', 'hard'
       deck: [],
       room: [],
       discardPile: [],
@@ -457,8 +477,12 @@
         });
       });
 
-      // Diamonds: 2 - 14 (Weapons)
-      CARD_RANKS.forEach(r => {
+      // Diamonds: Weapons (Di mode sulit, kartu wajah J, Q, K, As dihilangkan)
+      const weaponRanks = gameState.difficulty === 'hard'
+        ? CARD_RANKS.filter(r => r.rank <= 10)
+        : CARD_RANKS;
+
+      weaponRanks.forEach(r => {
         cards.push({
           id: idCounter++,
           suit: SUITS.DIAMONDS,
@@ -514,10 +538,20 @@
     }
 
     function startNewGame() {
+      const diffSelect = document.getElementById('difficultySelect');
+      gameState.difficulty = diffSelect ? diffSelect.value : 'normal';
+
+      if (gameState.difficulty === 'easy') {
+        gameState.maxHp = 25;
+        gameState.hp = 25;
+      } else {
+        gameState.maxHp = 20;
+        gameState.hp = 20;
+      }
+
       gameState.deck = createScoundrelDeck();
       gameState.room = [];
       gameState.discardPile = [];
-      gameState.hp = 20;
       gameState.activeWeapon = null;
       gameState.fledLastTurn = false;
       gameState.cardsClearedThisRoom = 0;
@@ -526,12 +560,13 @@
       gameState.pendingMonsterIndex = -1;
       gameState.isGameOver = false;
 
+      const diffLabel = gameState.difficulty === 'easy' ? 'Mudah' : (gameState.difficulty === 'hard' ? 'Sulit' : 'Normal');
       const logBox = document.getElementById('gameLog');
-      logBox.innerHTML = '<div class="text-amber-900/90 italic font-medium">⚔️ Memasuki petualangan baru di Scoundrel Dungeon...</div>';
+      logBox.innerHTML = `<div class="text-amber-900/90 italic font-medium">⚔️ Memasuki petualangan Scoundrel [Tingkat: ${diffLabel}]... HP: ${gameState.hp}/${gameState.maxHp}</div>`;
       
       dealRoom();
       updateUI();
-      addLog("Dek dikocok (44 kartu). 4 kartu dibuka di ruangan pertama.", "room");
+      addLog(`Dek dikocok (${gameState.deck.length + gameState.room.length} kartu). 4 kartu dibuka di ruangan pertama.`, "room");
     }
 
     function dealRoom() {
@@ -955,6 +990,11 @@
       });
       document.getElementById('endGameRestartBtn').addEventListener('click', () => {
         document.getElementById('endGameModal').classList.add('hidden');
+        startNewGame();
+      });
+
+      // Difficulty Selector Listener
+      document.getElementById('difficultySelect').addEventListener('change', () => {
         startNewGame();
       });
 
