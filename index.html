@@ -85,6 +85,9 @@
       <button id="rulesBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/90 hover:bg-amber-50 text-amber-900 border border-amber-300 shadow-sm transition flex items-center gap-1.5">
         <i class="fa-solid fa-scroll text-amber-700"></i> Aturan Main
       </button>
+      <button id="fullscreenBtn" title="Layar Penuh" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/90 hover:bg-amber-50 text-amber-900 border border-amber-300 shadow-sm transition">
+        <i id="fullscreenIcon" class="fa-solid fa-expand text-amber-700"></i>
+      </button>
       <button id="soundToggle" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/90 hover:bg-amber-50 text-amber-900 border border-amber-300 shadow-sm transition">
         <i id="soundIcon" class="fa-solid fa-volume-high text-amber-700"></i>
       </button>
@@ -979,6 +982,40 @@
           soundBtn.classList.add('opacity-60');
         }
       });
+
+      // Fullscreen Toggle
+      const fullscreenBtn = document.getElementById('fullscreenBtn');
+      const fullscreenIcon = document.getElementById('fullscreenIcon');
+
+      function updateFullscreenIcon() {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          fullscreenIcon.className = "fa-solid fa-compress text-amber-700";
+          fullscreenBtn.setAttribute('title', 'Keluar Layar Penuh');
+        } else {
+          fullscreenIcon.className = "fa-solid fa-expand text-amber-700";
+          fullscreenBtn.setAttribute('title', 'Layar Penuh');
+        }
+      }
+
+      fullscreenBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          const docEl = document.documentElement;
+          if (docEl.requestFullscreen) {
+            docEl.requestFullscreen().catch(() => {});
+          } else if (docEl.webkitRequestFullscreen) {
+            docEl.webkitRequestFullscreen();
+          }
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+        }
+      });
+
+      document.addEventListener('fullscreenchange', updateFullscreenIcon);
+      document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
 
       // Mulai Permainan Pertama
       startNewGame();
